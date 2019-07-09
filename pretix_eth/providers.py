@@ -15,6 +15,7 @@ from eth_utils import (
 class Transaction(NamedTuple):
     hash: Hash32
     sender: ChecksumAddress
+    to: ChecksumAddress
     timestamp: int
     value: int
 
@@ -25,27 +26,25 @@ class TransactionProviderAPI(ABC):
         ...
 
 
-class EthplorerTransactionProvider(TransactionProviderAPI):
-    def __init__(self, api_key=None) -> None:
-        if api_key is None:
-            api_key = 'freekey'
-        self.api_key = api_key
-
+class BlockscoutTransactionProvider(TransactionProviderAPI):
     @to_tuple
-    def get_transactions(self, to_address: ChecksumAddress) -> Iterable[Transaction]:
+    def get_transactions(self, from_address: ChecksumAddress) -> Iterable[Transaction]:
         response = requests.get(
-            f'https://api.ethplorer.io/getAddressTransactions/{to_address}?apiKey={self.api_key}'  # noqa: E501
+            f'https://blockscout.com/poa/core/api?module=account&action=txlist&address={from_address}',  # noqa: E501
         )
         # TODO: handle http errors here
         response.raise_for_status()
-        transaction_data = response.json()
-        for raw_transaction in transaction_data:
-            if raw_transaction['success'] is True:
+        response_data = response.json()
+        if response_data['status'] != "1":
+            raise Exception("TODO: real exception and message")
+        for raw_transaction in response_data['result']:
+            if raw_transaction['txreceipt_status'] == '1':
                 yield Transaction(
                     hash=to_bytes(hexstr=raw_transaction['hash']),
                     sender=to_checksum_address(raw_transaction['from']),
-                    timestamp=raw_transaction['timestamp'],
-                    value=raw_transaction['value'],
+                    to=to_checksum_address(raw_transaction['to']),
+                    timestamp=int(raw_transaction['timeStamp']),
+                    value=int(raw_transaction['value']),
                 )
 
 

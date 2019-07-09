@@ -1,4 +1,4 @@
-from pretix_eth.providers import EthplorerTransactionProvider
+from pretix_eth.providers import BlockscoutTransactionProvider
 
 from eth_utils import is_checksum_address, is_bytes, is_integer
 
@@ -6,8 +6,8 @@ from eth_utils import is_checksum_address, is_bytes, is_integer
 ZERO_ADDRESS = '0x0000000000000000000000000000000000000000'
 
 
-def test_ethplorer_transaction_provider():
-    provider = EthplorerTransactionProvider()
+def test_blockscout_transaction_provider():
+    provider = BlockscoutTransactionProvider()
     transactions = provider.get_transactions(ZERO_ADDRESS)
     assert len(transactions) > 0
     assert all(
